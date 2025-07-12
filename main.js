@@ -1,5 +1,62 @@
 console.log('🚀 Starting Simple WebXR Viewer...');
 
+// Cache clearing functionality
+function clearCache() {
+  if ('caches' in window) {
+    caches.keys().then(names => {
+      names.forEach(name => {
+        caches.delete(name);
+        console.log('🗑️ Cleared cache:', name);
+      });
+    });
+  }
+  
+  // Clear service worker cache
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => {
+        registration.unregister();
+        console.log('🗑️ Unregistered service worker');
+      });
+    });
+  }
+  
+  // Force reload with cache busting
+  window.location.reload(true);
+}
+
+// Add cache clear button
+const cacheButton = document.createElement('button');
+cacheButton.textContent = '🗑️';
+cacheButton.style.position = 'absolute';
+cacheButton.style.top = '20px';
+cacheButton.style.right = '80px';
+cacheButton.style.width = '50px';
+cacheButton.style.height = '50px';
+cacheButton.style.borderRadius = '50%';
+cacheButton.style.border = 'none';
+cacheButton.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+cacheButton.style.color = '#333';
+cacheButton.style.fontSize = '20px';
+cacheButton.style.cursor = 'pointer';
+cacheButton.style.zIndex = '1000';
+cacheButton.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+cacheButton.style.transition = 'all 0.3s ease';
+
+cacheButton.addEventListener('mouseenter', () => {
+  cacheButton.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+  cacheButton.style.transform = 'scale(1.1)';
+});
+
+cacheButton.addEventListener('mouseleave', () => {
+  cacheButton.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+  cacheButton.style.transform = 'scale(1)';
+});
+
+cacheButton.addEventListener('click', clearCache);
+document.body.appendChild(cacheButton);
+console.log('✅ Cache clear button created');
+
 // Import Three.js and modules using import map
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -105,12 +162,15 @@ ground.receiveShadow = true;
 scene.add(ground);
 console.log('✅ Ground plane created');
 
-// Load HDRI environment
+// Cache busting timestamp
+const cacheBuster = Date.now();
+
+// Load HDRI environment with cache busting
 const rgbeLoader = new RGBELoader();
 rgbeLoader.setPath('assets/env/');
 
 rgbeLoader.load(
-  'studio_small_09_1k.hdr', 
+  `studio_small_09_1k.hdr?v=${cacheBuster}`, 
   function (texture) {
     console.log('✅ HDRI loaded successfully');
     texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -126,12 +186,12 @@ rgbeLoader.load(
   }
 );
 
-// Model loading
+// Model loading with cache busting
 const loader = new GLTFLoader();
 let model;
 
 loader.load(
-  'assets/models/DamagedHelmet.glb',
+  `assets/models/DamagedHelmet.glb?v=${cacheBuster}`,
   (gltf) => {
     model = gltf.scene;
     model.scale.set(1, 1, 1);
