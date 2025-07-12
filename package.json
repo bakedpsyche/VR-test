@@ -1,0 +1,39 @@
+{
+  "name": "threejs-photoreal-xr-viewer",
+  "version": "1.0.0",
+  "description": "A photorealistic WebXR viewer using three.js with VR and AR support",
+  "main": "main.js",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . -p 3000",
+    "setup": "node setup.js",
+    "build": "echo 'No build step required - static files only'",
+    "deploy": "echo 'Deploy to GitHub Pages or your preferred hosting service'"
+  },
+  "keywords": [
+    "threejs",
+    "webxr",
+    "vr",
+    "ar",
+    "photorealistic",
+    "3d",
+    "gltf",
+    "pbr"
+  ],
+  "author": "WebXR Developer",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/threejs-photoreal-xr-viewer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/threejs-photoreal-xr-viewer/issues"
+  },
+  "homepage": "https://yourusername.github.io/threejs-photoreal-xr-viewer"
+} 
