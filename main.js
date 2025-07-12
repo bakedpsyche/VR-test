@@ -74,23 +74,33 @@ const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerH
 camera.position.set(0, 1.5, 3);
 console.log('✅ Camera created');
 
-// Renderer setup
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+// Mobile detection
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+// Renderer setup with mobile optimizations
+const renderer = new THREE.WebGLRenderer({ 
+  antialias: !isMobile, // Disable antialiasing on mobile for performance
+  powerPreference: "high-performance"
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x808080, 1); // Grey background
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = !isMobile; // Disable shadows on mobile
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+// Mobile-specific optimizations
+if (isMobile) {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio
+}
 document.body.appendChild(renderer.domElement);
 console.log('✅ Renderer created');
 
-// Orbit controls
+// Orbit controls with mobile optimizations
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.02; // Slower orbit speed
-controls.screenSpacePanning = false;
+controls.dampingFactor = isMobile ? 0.1 : 0.02; // Faster damping on mobile
+controls.screenSpacePanning = true; // Better for mobile
 controls.minDistance = 1;
 controls.maxDistance = 10;
 controls.maxPolarAngle = Math.PI;
@@ -133,51 +143,55 @@ homeButton.addEventListener('click', () => {
 document.body.appendChild(homeButton);
 console.log('✅ Home button created');
 
-// Lighting setup
-const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+// Lighting setup with mobile optimizations
+const ambientLight = new THREE.AmbientLight(0x404040, isMobile ? 0.6 : 0.3);
 scene.add(ambientLight);
 
-// Additional directional light for better shadows
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(2, 4, 2);
-directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = 2048;
-directionalLight.shadow.mapSize.height = 2048;
-directionalLight.shadow.camera.near = 0.5;
-directionalLight.shadow.camera.far = 50;
-directionalLight.shadow.camera.left = -5;
-directionalLight.shadow.camera.right = 5;
-directionalLight.shadow.camera.top = 5;
-directionalLight.shadow.camera.bottom = -5;
-scene.add(directionalLight);
+// Simplified lighting for mobile
+if (!isMobile) {
+  // Additional directional light for better shadows (desktop only)
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(2, 4, 2);
+  directionalLight.castShadow = true;
+  directionalLight.shadow.mapSize.width = 1024; // Reduced shadow map size
+  directionalLight.shadow.mapSize.height = 1024;
+  directionalLight.shadow.camera.near = 0.5;
+  directionalLight.shadow.camera.far = 50;
+  directionalLight.shadow.camera.left = -5;
+  directionalLight.shadow.camera.right = 5;
+  directionalLight.shadow.camera.top = 5;
+  directionalLight.shadow.camera.bottom = -5;
+  scene.add(directionalLight);
+}
 
 console.log('✅ Lighting setup complete');
 
 // Cache busting timestamp
 const cacheBuster = Date.now();
 
-// Load HDRI environment with cache busting
-const rgbeLoader = new RGBELoader();
-rgbeLoader.setPath('assets/env/');
+// Load HDRI environment with cache busting (desktop only for performance)
+if (!isMobile) {
+  const rgbeLoader = new RGBELoader();
+  rgbeLoader.setPath('assets/env/');
 
-rgbeLoader.load(
-  `studio_small_09_1k.hdr?v=${cacheBuster}`, 
-  function (texture) {
-    console.log('✅ HDRI loaded successfully');
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    scene.environment = texture;
-    // Keep the off-white grey background instead of HDRI background
-    console.log('✅ HDRI environment set');
-  },
-  function (progress) {
-    console.log('HDRI loading progress:', (progress.loaded / progress.total * 100) + '%');
-  },
-  function (error) {
-    console.warn('HDRI loading failed:', error);
-  }
-);
+  rgbeLoader.load(
+    `studio_small_09_1k.hdr?v=${cacheBuster}`, 
+    function (texture) {
+      console.log('✅ HDRI loaded successfully');
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      scene.environment = texture;
+      console.log('✅ HDRI environment set');
+    },
+    function (progress) {
+      console.log('HDRI loading progress:', (progress.loaded / progress.total * 100) + '%');
+    },
+    function (error) {
+      console.warn('HDRI loading failed:', error);
+    }
+  );
+}
 
-// Model loading with cache busting
+// Model loading with cache busting and mobile optimizations
 const loader = new GLTFLoader();
 let model;
 
@@ -189,8 +203,12 @@ loader.load(
     model.position.set(0, 0, 0);
     model.traverse((child) => {
       if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
+        child.castShadow = !isMobile;
+        child.receiveShadow = !isMobile;
+        // Optimize materials for mobile
+        if (isMobile && child.material) {
+          child.material.envMapIntensity = 0.5; // Reduce reflections on mobile
+        }
       }
     });
     scene.add(model);
@@ -205,19 +223,30 @@ loader.load(
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
     model = new THREE.Mesh(geometry, material);
-    model.castShadow = true;
+    model.castShadow = !isMobile;
     scene.add(model);
     console.log('✅ Fallback cube created');
   }
 );
 
-// Animation loop
-function animate() {
+// Animation loop with mobile optimizations
+let lastTime = 0;
+const targetFPS = isMobile ? 30 : 60; // Lower FPS on mobile
+const frameInterval = 1000 / targetFPS;
+
+function animate(currentTime) {
   requestAnimationFrame(animate);
+  
+  // Frame rate limiting for mobile
+  if (isMobile && currentTime - lastTime < frameInterval) {
+    return;
+  }
+  lastTime = currentTime;
   
   controls.update();
   
-  if (model) {
+  // Disable auto-rotation on mobile for better performance
+  if (model && !isMobile) {
     model.rotation.y += 0.005;
   }
   
