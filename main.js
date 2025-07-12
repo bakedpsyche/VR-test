@@ -3,6 +3,7 @@ console.log('🚀 Starting Simple WebXR Viewer...');
 // Import Three.js and modules using import map
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 console.log('✅ All modules loaded');
@@ -31,7 +32,7 @@ console.log('✅ Renderer created');
 // Orbit controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.05;
+controls.dampingFactor = 0.02; // Slower orbit speed
 controls.screenSpacePanning = false;
 controls.minDistance = 1;
 controls.maxDistance = 10;
@@ -79,12 +80,6 @@ console.log('✅ Home button created');
 const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
 scene.add(ambientLight);
 
-// Area light from the top
-const areaLight = new THREE.RectAreaLight(0xffffff, 5, 4, 4);
-areaLight.position.set(0, 5, 0);
-areaLight.lookAt(0, 0, 0);
-scene.add(areaLight);
-
 // Additional directional light for better shadows
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(2, 4, 2);
@@ -109,6 +104,27 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 console.log('✅ Ground plane created');
+
+// Load HDRI environment
+const rgbeLoader = new RGBELoader();
+rgbeLoader.setPath('assets/env/');
+
+rgbeLoader.load(
+  'studio_small_09_1k.hdr', 
+  function (texture) {
+    console.log('✅ HDRI loaded successfully');
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = texture;
+    // Keep the off-white grey background instead of HDRI background
+    console.log('✅ HDRI environment set');
+  },
+  function (progress) {
+    console.log('HDRI loading progress:', (progress.loaded / progress.total * 100) + '%');
+  },
+  function (error) {
+    console.warn('HDRI loading failed:', error);
+  }
+);
 
 // Model loading
 const loader = new GLTFLoader();
