@@ -58,21 +58,61 @@ cube.castShadow = true;
 scene.add(cube);
 console.log('✅ Fallback cube added');
 
-// VR and AR buttons
+// VR and AR buttons with responsive positioning
 try {
   const vrButton = VRButton.createButton(renderer);
   vrButton.style.position = 'absolute';
   vrButton.style.top = '20px';
-  vrButton.style.left = '20px';
+  vrButton.style.right = '120px'; // Desktop: top-right
+  vrButton.style.left = 'auto';
+  vrButton.style.zIndex = '1000';
   document.body.appendChild(vrButton);
 
   const arButton = ARButton.createButton(renderer, { 
-    requiredFeatures: ['hit-test']
+    requiredFeatures: ['hit-test'],
+    optionalFeatures: ['dom-overlay'],
+    domOverlay: { root: document.body }
   });
   arButton.style.position = 'absolute';
   arButton.style.top = '20px';
-  arButton.style.left = '120px';
+  arButton.style.right = '20px'; // Desktop: top-right
+  arButton.style.left = 'auto';
+  arButton.style.zIndex = '1000';
   document.body.appendChild(arButton);
+  
+  // Mobile responsive positioning
+  function updateButtonPosition() {
+    if (window.innerWidth <= 768) {
+      // Mobile: center top
+      vrButton.style.right = 'auto';
+      vrButton.style.left = '50%';
+      vrButton.style.transform = 'translateX(-50%)';
+      vrButton.style.marginRight = '60px';
+      
+      arButton.style.right = 'auto';
+      arButton.style.left = '50%';
+      arButton.style.transform = 'translateX(-50%)';
+      arButton.style.marginLeft = '60px';
+    } else {
+      // Desktop: top-right
+      vrButton.style.right = '120px';
+      vrButton.style.left = 'auto';
+      vrButton.style.transform = 'none';
+      vrButton.style.marginRight = '0';
+      
+      arButton.style.right = '20px';
+      arButton.style.left = 'auto';
+      arButton.style.transform = 'none';
+      arButton.style.marginLeft = '0';
+    }
+  }
+  
+  // Initial positioning
+  updateButtonPosition();
+  
+  // Update on resize
+  window.addEventListener('resize', updateButtonPosition);
+  
   console.log('✅ WebXR buttons added');
 } catch (error) {
   console.warn('WebXR buttons not available:', error);
@@ -131,8 +171,10 @@ function loadModel() {
     function (gltf) {
       console.log('✅ Model loaded successfully');
       const model = gltf.scene;
-      model.position.set(0, 1.4, 0);
-      model.scale.setScalar(1);
+      
+      // Position model for better AR visibility
+      model.position.set(0, 0, -2); // Move forward in AR
+      model.scale.setScalar(0.5); // Make smaller for AR
       
       // Enable shadows for all meshes
       model.traverse((node) => {
