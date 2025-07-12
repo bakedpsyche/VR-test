@@ -2,6 +2,22 @@ console.log('🚀 Starting Simple WebXR Viewer...');
 
 // Cache clearing functionality
 function clearCache() {
+  // Show loading indicator
+  const loadingDiv = document.createElement('div');
+  loadingDiv.textContent = '🔄 Clearing cache...';
+  loadingDiv.style.position = 'fixed';
+  loadingDiv.style.top = '50%';
+  loadingDiv.style.left = '50%';
+  loadingDiv.style.transform = 'translate(-50%, -50%)';
+  loadingDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  loadingDiv.style.color = 'white';
+  loadingDiv.style.padding = '20px';
+  loadingDiv.style.borderRadius = '10px';
+  loadingDiv.style.zIndex = '9999';
+  loadingDiv.style.fontSize = '18px';
+  document.body.appendChild(loadingDiv);
+
+  // Clear all caches
   if ('caches' in window) {
     caches.keys().then(names => {
       names.forEach(name => {
@@ -21,8 +37,21 @@ function clearCache() {
     });
   }
   
+  // Clear localStorage and sessionStorage
+  localStorage.clear();
+  sessionStorage.clear();
+  console.log('🗑️ Cleared local storage');
+  
   // Force reload with cache busting
-  window.location.reload(true);
+  setTimeout(() => {
+    window.location.reload(true);
+  }, 1000);
+}
+
+// Auto-clear cache on page load if URL has cache parameter
+if (window.location.search.includes('clear-cache')) {
+  console.log('🔄 Auto-clearing cache...');
+  clearCache();
 }
 
 // Add cache clear button
@@ -53,7 +82,13 @@ cacheButton.addEventListener('mouseleave', () => {
   cacheButton.style.transform = 'scale(1)';
 });
 
-cacheButton.addEventListener('click', clearCache);
+cacheButton.addEventListener('click', () => {
+  // Add URL parameter to trigger auto-cache clearing on reload
+  const url = new URL(window.location);
+  url.searchParams.set('clear-cache', 'true');
+  url.searchParams.set('t', Date.now()); // Add timestamp
+  window.location.href = url.toString();
+});
 document.body.appendChild(cacheButton);
 console.log('✅ Cache clear button created');
 
@@ -166,8 +201,9 @@ if (!isMobile) {
 
 console.log('✅ Lighting setup complete');
 
-// Cache busting timestamp
+// Cache busting timestamp - changes every time
 const cacheBuster = Date.now();
+const version = Math.floor(cacheBuster / 1000); // Version changes every second
 
 // Load HDRI environment with cache busting (desktop only for performance)
 if (!isMobile) {
@@ -175,7 +211,7 @@ if (!isMobile) {
   rgbeLoader.setPath('assets/env/');
 
   rgbeLoader.load(
-    `studio_small_09_1k.hdr?v=${cacheBuster}`, 
+    `studio_small_09_1k.hdr?v=${version}`, 
     function (texture) {
       console.log('✅ HDRI loaded successfully');
       texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -196,7 +232,7 @@ const loader = new GLTFLoader();
 let model;
 
 loader.load(
-  `assets/models/DamagedHelmet.glb?v=${cacheBuster}`,
+  `assets/models/DamagedHelmet.glb?v=${version}`,
   (gltf) => {
     model = gltf.scene;
     model.scale.set(1, 1, 1);
