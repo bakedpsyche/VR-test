@@ -51,7 +51,33 @@ function clearCache() {
 // Auto-clear cache on page load if URL has cache parameter
 if (window.location.search.includes('clear-cache')) {
   console.log('🔄 Auto-clearing cache...');
-  clearCache();
+  // Remove the clear-cache parameter to prevent loops
+  const url = new URL(window.location);
+  url.searchParams.delete('clear-cache');
+  window.history.replaceState({}, '', url.toString());
+  
+  // Clear cache without reloading
+  if ('caches' in window) {
+    caches.keys().then(names => {
+      names.forEach(name => {
+        caches.delete(name);
+        console.log('🗑️ Cleared cache:', name);
+      });
+    });
+  }
+  
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => {
+        registration.unregister();
+        console.log('🗑️ Unregistered service worker');
+      });
+    });
+  }
+  
+  localStorage.clear();
+  sessionStorage.clear();
+  console.log('🗑️ Cleared local storage');
 }
 
 // Add cache clear button
@@ -83,11 +109,49 @@ cacheButton.addEventListener('mouseleave', () => {
 });
 
 cacheButton.addEventListener('click', () => {
-  // Add URL parameter to trigger auto-cache clearing on reload
-  const url = new URL(window.location);
-  url.searchParams.set('clear-cache', 'true');
-  url.searchParams.set('t', Date.now()); // Add timestamp
-  window.location.href = url.toString();
+  // Show loading indicator
+  const loadingDiv = document.createElement('div');
+  loadingDiv.textContent = '🔄 Clearing cache...';
+  loadingDiv.style.position = 'fixed';
+  loadingDiv.style.top = '50%';
+  loadingDiv.style.left = '50%';
+  loadingDiv.style.transform = 'translate(-50%, -50%)';
+  loadingDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  loadingDiv.style.color = 'white';
+  loadingDiv.style.padding = '20px';
+  loadingDiv.style.borderRadius = '10px';
+  loadingDiv.style.zIndex = '9999';
+  loadingDiv.style.fontSize = '18px';
+  document.body.appendChild(loadingDiv);
+
+  // Clear cache without page reload
+  if ('caches' in window) {
+    caches.keys().then(names => {
+      names.forEach(name => {
+        caches.delete(name);
+        console.log('🗑️ Cleared cache:', name);
+      });
+    });
+  }
+  
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => {
+        registration.unregister();
+        console.log('🗑️ Unregistered service worker');
+      });
+    });
+  }
+  
+  localStorage.clear();
+  sessionStorage.clear();
+  console.log('🗑️ Cleared local storage');
+  
+  // Remove loading indicator and reload after a short delay
+  setTimeout(() => {
+    document.body.removeChild(loadingDiv);
+    window.location.reload();
+  }, 1000);
 });
 document.body.appendChild(cacheButton);
 console.log('✅ Cache clear button created');
@@ -109,8 +173,10 @@ const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerH
 camera.position.set(0, 1.5, 3);
 console.log('✅ Camera created');
 
-// Mobile detection
+// Mobile detection with iOS support
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
 
 // Renderer setup with mobile optimizations
 const renderer = new THREE.WebGLRenderer({ 
@@ -127,6 +193,15 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 // Mobile-specific optimizations
 if (isMobile) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio
+  
+  // iOS Safari specific optimizations
+  if (isIOS && isSafari) {
+    console.log('📱 iOS Safari detected - applying optimizations');
+    // Reduce antialiasing for better performance on iOS
+    renderer.antialias = false;
+    // Lower pixel ratio for iOS devices
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  }
 }
 document.body.appendChild(renderer.domElement);
 console.log('✅ Renderer created');
@@ -203,6 +278,14 @@ if (isMobile) {
   const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
   fillLight.position.set(-2, 2, -2);
   scene.add(fillLight);
+  
+  // Extra lighting for iOS devices
+  if (isIOS) {
+    console.log('📱 Adding extra lighting for iOS');
+    const iosLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    iosLight.position.set(0, 3, 0);
+    scene.add(iosLight);
+  }
 }
 
 console.log('✅ Lighting setup complete');
@@ -252,6 +335,16 @@ loader.load(
           if (child.material.isMeshStandardMaterial) {
             child.material.metalness = Math.min(child.material.metalness || 0, 0.8);
             child.material.roughness = Math.max(child.material.roughness || 0.5, 0.2);
+          }
+          
+          // iOS-specific material optimizations
+          if (isIOS && child.material) {
+            console.log('📱 Applying iOS material optimizations');
+            child.material.envMapIntensity = 0.2; // Even lower reflections for iOS
+            if (child.material.isMeshStandardMaterial) {
+              child.material.metalness = Math.min(child.material.metalness || 0, 0.6);
+              child.material.roughness = Math.max(child.material.roughness || 0.5, 0.3);
+            }
           }
         }
       }
