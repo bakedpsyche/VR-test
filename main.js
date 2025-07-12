@@ -77,7 +77,7 @@ console.log('✅ Camera created');
 // Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x421C, 1); // Off-white grey background
+renderer.setClearColor(0x808080, 1); // Grey background
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -152,15 +152,6 @@ directionalLight.shadow.camera.bottom = -5;
 scene.add(directionalLight);
 
 console.log('✅ Lighting setup complete');
-
-// Ground plane
-const groundGeometry = new THREE.PlaneGeometry(10, 10);
-const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x808080 });
-const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
-console.log('✅ Ground plane created');
 
 // Cache busting timestamp
 const cacheBuster = Date.now();
