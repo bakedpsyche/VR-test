@@ -3,7 +3,6 @@ console.log('🚀 Starting Simple WebXR Viewer...');
 // Import Three.js and modules using import map
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 console.log('✅ All modules loaded');
