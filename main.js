@@ -131,6 +131,179 @@ cacheButton.addEventListener('click', () => {
 document.body.appendChild(cacheButton);
 console.log('✅ Cache clear button created');
 
+// Material debug panel for PBR testing
+const debugPanel = document.createElement('div');
+debugPanel.style.position = 'absolute';
+debugPanel.style.top = '80px';
+debugPanel.style.right = '20px';
+debugPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+debugPanel.style.color = 'white';
+debugPanel.style.padding = '15px';
+debugPanel.style.borderRadius = '10px';
+debugPanel.style.fontSize = '12px';
+debugPanel.style.fontFamily = 'monospace';
+debugPanel.style.zIndex = '1000';
+debugPanel.style.minWidth = '200px';
+debugPanel.style.display = 'none'; // Hidden by default
+
+debugPanel.innerHTML = `
+  <div style="margin-bottom: 10px; font-weight: bold;">🎨 PBR Material Debug</div>
+  <div style="margin-bottom: 5px;">
+    <label>Metalness: <span id="metalness-value">0.0</span></label><br>
+    <input type="range" id="metalness-slider" min="0" max="1" step="0.01" value="0.0" style="width: 100%;">
+  </div>
+  <div style="margin-bottom: 5px;">
+    <label>Roughness: <span id="roughness-value">0.5</span></label><br>
+    <input type="range" id="roughness-slider" min="0" max="1" step="0.01" value="0.5" style="width: 100%;">
+  </div>
+  <div style="margin-bottom: 5px;">
+    <label>Env Intensity: <span id="env-intensity-value">1.0</span></label><br>
+    <input type="range" id="env-intensity-slider" min="0" max="2" step="0.1" value="1.0" style="width: 100%;">
+  </div>
+  <button id="toggle-debug" style="width: 100%; margin-top: 10px; padding: 5px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">Hide Debug</button>
+`;
+
+document.body.appendChild(debugPanel);
+
+// Debug panel controls
+const toggleDebug = document.getElementById('toggle-debug');
+const metalnessSlider = document.getElementById('metalness-slider');
+const roughnessSlider = document.getElementById('roughness-slider');
+const envIntensitySlider = document.getElementById('env-intensity-slider');
+const metalnessValue = document.getElementById('metalness-value');
+const roughnessValue = document.getElementById('roughness-value');
+const envIntensityValue = document.getElementById('env-intensity-value');
+
+toggleDebug.addEventListener('click', () => {
+  if (debugPanel.style.display === 'none') {
+    debugPanel.style.display = 'block';
+    toggleDebug.textContent = 'Hide Debug';
+  } else {
+    debugPanel.style.display = 'none';
+    toggleDebug.textContent = 'Show Debug';
+  }
+});
+
+// Material update function
+function updateMaterials() {
+  if (model) {
+    model.traverse((child) => {
+      if (child.isMesh && child.material && child.material.isMeshStandardMaterial) {
+        child.material.metalness = parseFloat(metalnessSlider.value);
+        child.material.roughness = parseFloat(roughnessSlider.value);
+        child.material.envMapIntensity = parseFloat(envIntensitySlider.value);
+        child.material.needsUpdate = true;
+      }
+    });
+  }
+}
+
+// Update display values
+metalnessSlider.addEventListener('input', () => {
+  metalnessValue.textContent = metalnessSlider.value;
+  updateMaterials();
+});
+
+roughnessSlider.addEventListener('input', () => {
+  roughnessValue.textContent = roughnessSlider.value;
+  updateMaterials();
+});
+
+envIntensitySlider.addEventListener('input', () => {
+  envIntensityValue.textContent = envIntensitySlider.value;
+  updateMaterials();
+});
+
+console.log('✅ PBR debug panel created');
+
+// Add a visible debug button
+const debugButton = document.createElement('button');
+debugButton.textContent = '🎨';
+debugButton.style.position = 'absolute';
+debugButton.style.top = '20px';
+debugButton.style.right = '140px';
+debugButton.style.width = '50px';
+debugButton.style.height = '50px';
+debugButton.style.borderRadius = '50%';
+debugButton.style.border = 'none';
+debugButton.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+debugButton.style.color = '#333';
+debugButton.style.fontSize = '20px';
+debugButton.style.cursor = 'pointer';
+debugButton.style.zIndex = '1000';
+debugButton.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+debugButton.style.transition = 'all 0.3s ease';
+
+debugButton.addEventListener('mouseenter', () => {
+  debugButton.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+  debugButton.style.transform = 'scale(1.1)';
+});
+
+debugButton.addEventListener('mouseleave', () => {
+  debugButton.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+  debugButton.style.transform = 'scale(1)';
+});
+
+debugButton.addEventListener('click', () => {
+  if (debugPanel.style.display === 'none') {
+    debugPanel.style.display = 'block';
+  } else {
+    debugPanel.style.display = 'none';
+  }
+});
+
+document.body.appendChild(debugButton);
+console.log('✅ PBR debug button created');
+
+// PBR Material Presets
+const pbrPresets = {
+  metal: { metalness: 0.9, roughness: 0.1, envIntensity: 1.0 },
+  plastic: { metalness: 0.0, roughness: 0.3, envIntensity: 0.8 },
+  ceramic: { metalness: 0.0, roughness: 0.1, envIntensity: 1.2 },
+  rubber: { metalness: 0.0, roughness: 0.8, envIntensity: 0.5 },
+  chrome: { metalness: 1.0, roughness: 0.05, envIntensity: 1.5 },
+  matte: { metalness: 0.0, roughness: 0.9, envIntensity: 0.3 }
+};
+
+// Add preset buttons to debug panel
+const presetContainer = document.createElement('div');
+presetContainer.style.marginTop = '10px';
+presetContainer.style.borderTop = '1px solid #555';
+presetContainer.style.paddingTop = '10px';
+
+presetContainer.innerHTML = `
+  <div style="margin-bottom: 5px; font-weight: bold;">Presets:</div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+    <button class="preset-btn" data-preset="metal" style="padding: 3px; font-size: 10px; background: #444; color: white; border: none; border-radius: 3px; cursor: pointer;">Metal</button>
+    <button class="preset-btn" data-preset="plastic" style="padding: 3px; font-size: 10px; background: #444; color: white; border: none; border-radius: 3px; cursor: pointer;">Plastic</button>
+    <button class="preset-btn" data-preset="ceramic" style="padding: 3px; font-size: 10px; background: #444; color: white; border: none; border-radius: 3px; cursor: pointer;">Ceramic</button>
+    <button class="preset-btn" data-preset="rubber" style="padding: 3px; font-size: 10px; background: #444; color: white; border: none; border-radius: 3px; cursor: pointer;">Rubber</button>
+    <button class="preset-btn" data-preset="chrome" style="padding: 3px; font-size: 10px; background: #444; color: white; border: none; border-radius: 3px; cursor: pointer;">Chrome</button>
+    <button class="preset-btn" data-preset="matte" style="padding: 3px; font-size: 10px; background: #444; color: white; border: none; border-radius: 3px; cursor: pointer;">Matte</button>
+  </div>
+`;
+
+debugPanel.appendChild(presetContainer);
+
+// Preset button handlers
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const preset = pbrPresets[btn.dataset.preset];
+    if (preset) {
+      metalnessSlider.value = preset.metalness;
+      roughnessSlider.value = preset.roughness;
+      envIntensitySlider.value = preset.envIntensity;
+      
+      metalnessValue.textContent = preset.metalness;
+      roughnessValue.textContent = preset.roughness;
+      envIntensityValue.textContent = preset.envIntensity;
+      
+      updateMaterials();
+      console.log('🎨 Applied PBR preset:', btn.dataset.preset);
+    }
+  });
+});
+
 // Import Three.js and modules using import map
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -153,18 +326,22 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
 
-// Renderer setup with mobile optimizations
+// Renderer setup with mobile optimizations and PBR enhancements
 const renderer = new THREE.WebGLRenderer({ 
   antialias: !isMobile, // Disable antialiasing on mobile for performance
-  powerPreference: "high-performance"
+  powerPreference: "high-performance",
+  alpha: false,
+  stencil: false,
+  depth: true
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x808080, 1); // Grey background
 renderer.shadowMap.enabled = !isMobile; // Disable shadows on mobile
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1;
+renderer.toneMappingExposure = 1.2; // Slightly higher exposure for PBR
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMappingWhitePoint = 1.0; // Better PBR rendering
 // Mobile-specific optimizations
 if (isMobile) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio
@@ -303,24 +480,67 @@ loader.load(
       if (child.isMesh) {
         child.castShadow = !isMobile;
         child.receiveShadow = !isMobile;
-        // Optimize materials for mobile
-        if (isMobile && child.material) {
-          child.material.envMapIntensity = 0.3; // Reduce reflections on mobile
-          // Ensure materials are properly lit
-          if (child.material.isMeshStandardMaterial) {
-            child.material.metalness = Math.min(child.material.metalness || 0, 0.8);
-            child.material.roughness = Math.max(child.material.roughness || 0.5, 0.2);
+        
+        // Enhanced PBR material processing
+        if (child.material) {
+          console.log('🎨 Processing material:', child.material.name || 'unnamed');
+          
+          // Ensure we're using MeshStandardMaterial for PBR
+          if (!child.material.isMeshStandardMaterial) {
+            console.log('🔄 Converting to MeshStandardMaterial for PBR');
+            const oldMaterial = child.material;
+            child.material = new THREE.MeshStandardMaterial({
+              color: oldMaterial.color || 0x808080,
+              map: oldMaterial.map,
+              normalMap: oldMaterial.normalMap,
+              roughnessMap: oldMaterial.roughnessMap,
+              metalnessMap: oldMaterial.metalnessMap,
+              aoMap: oldMaterial.aoMap,
+              emissiveMap: oldMaterial.emissiveMap,
+              emissive: oldMaterial.emissive || 0x000000,
+              emissiveIntensity: oldMaterial.emissiveIntensity || 1.0,
+              transparent: oldMaterial.transparent || false,
+              opacity: oldMaterial.opacity || 1.0,
+              side: oldMaterial.side || THREE.FrontSide
+            });
           }
           
-          // iOS-specific material optimizations
-          if (isIOS && child.material) {
-            console.log('📱 Applying iOS material optimizations');
-            child.material.envMapIntensity = 0.2; // Even lower reflections for iOS
-            if (child.material.isMeshStandardMaterial) {
-              child.material.metalness = Math.min(child.material.metalness || 0, 0.6);
-              child.material.roughness = Math.max(child.material.roughness || 0.5, 0.3);
+          // Apply PBR material enhancements
+          const material = child.material;
+          
+          // Set default PBR properties if not present
+          if (material.metalness === undefined) material.metalness = 0.0;
+          if (material.roughness === undefined) material.roughness = 0.5;
+          if (material.envMapIntensity === undefined) material.envMapIntensity = 1.0;
+          
+          // Enhanced PBR settings for better realism
+          material.metalness = Math.max(0, Math.min(1, material.metalness));
+          material.roughness = Math.max(0, Math.min(1, material.roughness));
+          material.envMapIntensity = Math.max(0, Math.min(2, material.envMapIntensity));
+          
+          // Enable PBR features
+          material.needsUpdate = true;
+          
+          // Mobile optimizations
+          if (isMobile) {
+            material.envMapIntensity = 0.3; // Reduce reflections on mobile
+            material.metalness = Math.min(material.metalness, 0.8);
+            material.roughness = Math.max(material.roughness, 0.2);
+            
+            // iOS-specific material optimizations
+            if (isIOS) {
+              console.log('📱 Applying iOS material optimizations');
+              material.envMapIntensity = 0.2; // Even lower reflections for iOS
+              material.metalness = Math.min(material.metalness, 0.6);
+              material.roughness = Math.max(material.roughness, 0.3);
             }
           }
+          
+          console.log('✅ PBR material applied:', {
+            metalness: material.metalness,
+            roughness: material.roughness,
+            envMapIntensity: material.envMapIntensity
+          });
         }
       }
     });
