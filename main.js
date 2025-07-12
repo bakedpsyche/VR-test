@@ -1,52 +1,6 @@
 console.log('🚀 Starting Simple WebXR Viewer...');
 
-// Cache clearing functionality
-function clearCache() {
-  // Show loading indicator
-  const loadingDiv = document.createElement('div');
-  loadingDiv.textContent = '🔄 Clearing cache...';
-  loadingDiv.style.position = 'fixed';
-  loadingDiv.style.top = '50%';
-  loadingDiv.style.left = '50%';
-  loadingDiv.style.transform = 'translate(-50%, -50%)';
-  loadingDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-  loadingDiv.style.color = 'white';
-  loadingDiv.style.padding = '20px';
-  loadingDiv.style.borderRadius = '10px';
-  loadingDiv.style.zIndex = '9999';
-  loadingDiv.style.fontSize = '18px';
-  document.body.appendChild(loadingDiv);
-
-  // Clear all caches
-  if ('caches' in window) {
-    caches.keys().then(names => {
-      names.forEach(name => {
-        caches.delete(name);
-        console.log('🗑️ Cleared cache:', name);
-      });
-    });
-  }
-  
-  // Clear service worker cache
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      registrations.forEach(registration => {
-        registration.unregister();
-        console.log('🗑️ Unregistered service worker');
-      });
-    });
-  }
-  
-  // Clear localStorage and sessionStorage
-  localStorage.clear();
-  sessionStorage.clear();
-  console.log('🗑️ Cleared local storage');
-  
-  // Force reload with cache busting
-  setTimeout(() => {
-    window.location.reload(true);
-  }, 1000);
-}
+// Cache clearing functionality - no longer used, kept for reference
 
 // Auto-clear cache on page load if URL has cache parameter
 if (window.location.search.includes('clear-cache')) {
@@ -147,10 +101,31 @@ cacheButton.addEventListener('click', () => {
   sessionStorage.clear();
   console.log('🗑️ Cleared local storage');
   
-  // Remove loading indicator and reload after a short delay
+  // Remove loading indicator and show success message
   setTimeout(() => {
     document.body.removeChild(loadingDiv);
-    window.location.reload();
+    
+    // Show success message
+    const successDiv = document.createElement('div');
+    successDiv.textContent = '✅ Cache cleared successfully!';
+    successDiv.style.position = 'fixed';
+    successDiv.style.top = '50%';
+    successDiv.style.left = '50%';
+    successDiv.style.transform = 'translate(-50%, -50%)';
+    successDiv.style.backgroundColor = 'rgba(0, 128, 0, 0.9)';
+    successDiv.style.color = 'white';
+    successDiv.style.padding = '20px';
+    successDiv.style.borderRadius = '10px';
+    successDiv.style.zIndex = '9999';
+    successDiv.style.fontSize = '18px';
+    document.body.appendChild(successDiv);
+    
+    // Remove success message after 2 seconds
+    setTimeout(() => {
+      if (document.body.contains(successDiv)) {
+        document.body.removeChild(successDiv);
+      }
+    }, 2000);
   }, 1000);
 });
 document.body.appendChild(cacheButton);
