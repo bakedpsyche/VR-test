@@ -179,16 +179,15 @@ document.body.appendChild(homeButton);
 console.log('✅ Home button created');
 
 // Lighting setup with mobile optimizations
-const ambientLight = new THREE.AmbientLight(0x404040, isMobile ? 0.6 : 0.3);
+const ambientLight = new THREE.AmbientLight(0x404040, isMobile ? 0.8 : 0.3);
 scene.add(ambientLight);
 
-// Simplified lighting for mobile
+// Directional light for both mobile and desktop
+const directionalLight = new THREE.DirectionalLight(0xffffff, isMobile ? 1.2 : 0.8);
+directionalLight.position.set(2, 4, 2);
 if (!isMobile) {
-  // Additional directional light for better shadows (desktop only)
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  directionalLight.position.set(2, 4, 2);
   directionalLight.castShadow = true;
-  directionalLight.shadow.mapSize.width = 1024; // Reduced shadow map size
+  directionalLight.shadow.mapSize.width = 1024;
   directionalLight.shadow.mapSize.height = 1024;
   directionalLight.shadow.camera.near = 0.5;
   directionalLight.shadow.camera.far = 50;
@@ -196,7 +195,14 @@ if (!isMobile) {
   directionalLight.shadow.camera.right = 5;
   directionalLight.shadow.camera.top = 5;
   directionalLight.shadow.camera.bottom = -5;
-  scene.add(directionalLight);
+}
+scene.add(directionalLight);
+
+// Additional fill light for mobile to ensure model is visible
+if (isMobile) {
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  fillLight.position.set(-2, 2, -2);
+  scene.add(fillLight);
 }
 
 console.log('✅ Lighting setup complete');
@@ -205,27 +211,25 @@ console.log('✅ Lighting setup complete');
 const cacheBuster = Date.now();
 const version = Math.floor(cacheBuster / 1000); // Version changes every second
 
-// Load HDRI environment with cache busting (desktop only for performance)
-if (!isMobile) {
-  const rgbeLoader = new RGBELoader();
-  rgbeLoader.setPath('assets/env/');
+// Load HDRI environment with cache busting
+const rgbeLoader = new RGBELoader();
+rgbeLoader.setPath('assets/env/');
 
-  rgbeLoader.load(
-    `studio_small_09_1k.hdr?v=${version}`, 
-    function (texture) {
-      console.log('✅ HDRI loaded successfully');
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-      scene.environment = texture;
-      console.log('✅ HDRI environment set');
-    },
-    function (progress) {
-      console.log('HDRI loading progress:', (progress.loaded / progress.total * 100) + '%');
-    },
-    function (error) {
-      console.warn('HDRI loading failed:', error);
-    }
-  );
-}
+rgbeLoader.load(
+  `studio_small_09_1k.hdr?v=${version}`, 
+  function (texture) {
+    console.log('✅ HDRI loaded successfully');
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = texture;
+    console.log('✅ HDRI environment set');
+  },
+  function (progress) {
+    console.log('HDRI loading progress:', (progress.loaded / progress.total * 100) + '%');
+  },
+  function (error) {
+    console.warn('HDRI loading failed:', error);
+  }
+);
 
 // Model loading with cache busting and mobile optimizations
 const loader = new GLTFLoader();
@@ -243,7 +247,12 @@ loader.load(
         child.receiveShadow = !isMobile;
         // Optimize materials for mobile
         if (isMobile && child.material) {
-          child.material.envMapIntensity = 0.5; // Reduce reflections on mobile
+          child.material.envMapIntensity = 0.3; // Reduce reflections on mobile
+          // Ensure materials are properly lit
+          if (child.material.isMeshStandardMaterial) {
+            child.material.metalness = Math.min(child.material.metalness || 0, 0.8);
+            child.material.roughness = Math.max(child.material.roughness || 0.5, 0.2);
+          }
         }
       }
     });
